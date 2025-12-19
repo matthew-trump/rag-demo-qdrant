@@ -7,6 +7,10 @@ A deliberately small, interview-friendly **RAG** demo you can run:
 - **On AWS** using **ECR + ECS Fargate** (runs **linux/amd64**), provisioned with **Terraform**
 - Uses **Postgres + pgvector** for both metadata + vector search (local Postgres in Docker; cloud Postgres via RDS)
 
+This project targets Python 3.13.x.
+If you use pyenv: 
+```pyenv install 3.13.1 && pyenv local 3.13.1```
+
 ## What you get
 
 ### API endpoints
