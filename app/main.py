@@ -1,12 +1,18 @@
+import logging
 from fastapi import FastAPI
 from app.rag.api import router as rag_router
 from app.rag.settings import settings
 from app.rag.db import init_db
 
 app = FastAPI(title="rag-demo", version="0.1.0")
+logger = logging.getLogger(__name__)
+
+# Ensure our module logs show up when running under uvicorn.
+logging.basicConfig(level=logging.INFO)
 
 @app.on_event("startup")
 def _startup() -> None:
+    logger.info("Starting with DATABASE_URL=%s", settings.database_url)
     init_db()
 
 @app.get("/health")

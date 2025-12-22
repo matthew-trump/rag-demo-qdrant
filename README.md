@@ -127,6 +127,7 @@ Environment variables:
 - This is intentionally **not** LangChain — the goal is to be transparent and minimal.
 - The AWS setup uses **Fargate**, **ALB**, **CloudWatch Logs**, **Secrets Manager** (for DB password), and **RDS Postgres**.
 - pgvector is enabled via `CREATE EXTENSION IF NOT EXISTS vector;` on startup.
+- Retrieval uses L2 distance (not cosine) because pgvector 0.8.1 can return no rows for `cosine_distance` when bound parameters are used. If you upgrade pgvector (≥0.9) and configure `ivfflat.probes`, you can switch back to cosine by changing `retrieve_top_k` in `app/rag/retrieval.py`.
 
 See:
 - [ARCHITECTURE.md](ARCHITECTURE.md)

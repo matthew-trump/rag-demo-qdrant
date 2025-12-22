@@ -33,7 +33,7 @@ def ingest(req: IngestRequest) -> dict:
     embeddings = embed_texts([c.text for c in chunks])
 
     with SessionLocal() as session:
-        doc = Document(source=req.source, metadata=req.metadata)
+        doc = Document(source=req.source, meta=req.metadata)
         session.add(doc)
         session.flush()  # assign doc.id
 
@@ -82,7 +82,7 @@ def ingest_dir() -> dict:
                 continue
             embeddings = embed_texts([c.text for c in chunks])
 
-            doc = Document(source=f"file:{filename}", metadata={"filename": filename})
+            doc = Document(source=f"file:{filename}", meta={"filename": filename})
             session.add(doc)
             session.flush()
 
