@@ -3,11 +3,11 @@
 ## Components (minimal RAG)
 
 1. **FastAPI service** (single container)
-   - Ingest: chunk → embed → store (Pinecone)
-   - Ask: embed question → retrieve top-k from Pinecone → generate answer → return citations
+   - Ingest: chunk → embed → store (Qdrant)
+   - Ask: embed question → retrieve top-k from Qdrant → generate answer → return citations
 
-2. **Pinecone**
-   - Stores chunks + embeddings as vectors with metadata (`content`, `source`, `chunk_index`, optional metadata).
+2. **Qdrant**
+   - Stores chunks + embeddings as vectors with payload (`content`, `source`, `chunk_index`, optional metadata).
    - Retrieval is a vector similarity query (cosine).
 
 ## Data flow
@@ -16,12 +16,12 @@
 1. `POST /ingest` (text + optional metadata)
 2. Chunking (fixed-size + overlap)
 3. Embeddings
-4. Upsert N vectors to Pinecone with metadata
+4. Upsert N vectors to Qdrant with payload metadata
 
 ### Ask
 1. `POST /ask` (question)
 2. Embed question
-3. Retrieve top-k similar chunks from Pinecone
+3. Retrieve top-k similar chunks from Qdrant
 4. Build prompt with:
    - instructions
    - retrieved context (with citations)
@@ -31,17 +31,16 @@
 
 ## Storage
 
-Pinecone index:
+Qdrant collection:
 - Vectors sized to embedding dimension (1536) with cosine metric.
-- Metadata: `content`, `source`, `chunk_index`, plus user-supplied metadata.
-- Namespace: configurable (default `default`).
+- Payload: `content`, `source`, `chunk_index`, plus user-supplied metadata.
 
 ## Deployments
 
 ### Local dev
 - API via `uvicorn`
-- Pinecone (managed) — requires API key and index; auto-created if missing.
+- Qdrant locally (e.g., `docker run -p 6333:6333 qdrant/qdrant`) or managed Qdrant Cloud.
 
 ### Cloud
 - Containerize the FastAPI service (e.g., ECS/Fargate or your platform of choice).
-- Pinecone remains managed; configure API key, index name, namespace, cloud/region via env vars.
+- Use Qdrant Cloud or your own Qdrant deployment; configure URL/API key/collection via env vars.

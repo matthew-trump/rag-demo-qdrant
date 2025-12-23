@@ -11,11 +11,9 @@ class Settings(BaseSettings):
     chunk_size: int = 800
     chunk_overlap: int = 120
 
-    pinecone_api_key: str | None = None
-    pinecone_index: str = "rag-demo"
-    pinecone_namespace: str = "default"
-    pinecone_cloud: str = "aws"
-    pinecone_region: str = "us-east-1"
+    qdrant_api_key: str | None = None
+    qdrant_url: str | None = "http://localhost:6333"
+    qdrant_collection: str = "rag-demo"
 
     # derived
     @property

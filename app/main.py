@@ -12,10 +12,10 @@ logging.basicConfig(level=logging.INFO)
 @app.on_event("startup")
 def _startup() -> None:
     logger.info(
-        "Starting with mode=%s, pinecone_index=%s, pinecone_namespace=%s",
+        "Starting with mode=%s, qdrant_url=%s, qdrant_collection=%s",
         settings.mode,
-        settings.pinecone_index,
-        settings.pinecone_namespace,
+        settings.qdrant_url,
+        settings.qdrant_collection,
     )
 
 @app.get("/health")

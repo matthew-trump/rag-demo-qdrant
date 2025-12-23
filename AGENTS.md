@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `app/main.py` is the FastAPI entrypoint; `app/rag/` holds core modules (`api.py` routes, `vector_store.py` for Pinecone, `chunking.py`, `embeddings.py`, `retrieval.py`, `llm.py`, `prompts.py`, `settings.py`).
+- `app/main.py` is the FastAPI entrypoint; `app/rag/` holds core modules (`api.py` routes, `vector_store.py` for Qdrant, `chunking.py`, `embeddings.py`, `retrieval.py`, `llm.py`, `prompts.py`, `settings.py`).
 - `data/` contains sample `.txt` files for `/ingest_dir`.
 - `docker/` has the service `Dockerfile`; `infra/` and `scripts/` remain for containerization and infra scaffolding (adapt as needed).
 - Python version is pinned to 3.13.1 (`.python-version`), dependencies in `requirements.txt`.
@@ -9,8 +9,8 @@
 ## Build, Test, and Development Commands
 - Create venv + install: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
 - Run API locally (hot reload): `uvicorn app.main:app --reload --port 8011`
-- Pinecone env: set `PINECONE_API_KEY`, `PINECONE_INDEX`, `PINECONE_NAMESPACE`, `PINECONE_CLOUD`, `PINECONE_REGION`; set `OPENAI_API_KEY` to leave mock mode.
-- Local Docker (optional): `docker build -t rag-demo .` (compose for Postgres is not used anymore).
+- Qdrant env: set `QDRANT_URL` (e.g., `http://localhost:6333`), `QDRANT_API_KEY` (if needed), `QDRANT_COLLECTION`; set `OPENAI_API_KEY` to leave mock mode.
+- Local Docker (optional): `docker build -t rag-demo .`.
 
 ## Coding Style & Naming Conventions
 - Python 3.13, PEP 8, 4-space indent; favor type hints (as in `settings.py`), snake_case for modules/functions, UPPER_SNAKE for constants/env keys.
@@ -29,4 +29,4 @@
 
 ## Security & Configuration Tips
 - Do not commit secrets; use `.env` locally and environment variables in deploys. Mock mode prevents accidental OpenAI spend.
-- Pinecone requires an API key; set cloud/region/index/namespace explicitly for each environment. Avoid sending sensitive content to third-party services unless policies allow.
+- Qdrant Cloud requires an API key; set URL/collection per environment. Avoid sending sensitive content to third-party services unless policies allow.

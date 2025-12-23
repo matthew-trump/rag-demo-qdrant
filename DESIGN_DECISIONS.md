@@ -1,9 +1,9 @@
 # Design decisions
 
-## Why Pinecone?
-- Managed vector store with built-in ANN, replication, and monitoring.
-- Keeps vector search operational burden off the app; focus remains on the RAG flow.
-- Simple upsert/query API; metadata filters cover common needs.
+## Why Qdrant?
+- Purpose-built vector DB with HNSW ANN and strong payload filtering.
+- Easy local run (Docker) and managed cloud option; you can self-host or offload operations.
+- Simple upsert/search API; supports metadata filters and multiple vectors per record.
 
 ## Why a single FastAPI container?
 - Minimizes moving parts for a demo.
