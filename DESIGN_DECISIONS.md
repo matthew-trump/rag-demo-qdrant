@@ -1,9 +1,9 @@
 # Design decisions
 
-## Why Postgres + pgvector?
-- One system for metadata + vectors.
-- Local == cloud (Docker Postgres locally; RDS in AWS).
-- Easy to explain and debug.
+## Why Pinecone?
+- Managed vector store with built-in ANN, replication, and monitoring.
+- Keeps vector search operational burden off the app; focus remains on the RAG flow.
+- Simple upsert/query API; metadata filters cover common needs.
 
 ## Why a single FastAPI container?
 - Minimizes moving parts for a demo.

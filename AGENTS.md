@@ -1,23 +1,20 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `app/main.py` is the FastAPI entrypoint; `app/rag/` holds core modules (`api.py` routes, `db.py`/`schema.py` for Postgres + pgvector, `chunking.py`, `embeddings.py`, `retrieval.py`, `llm.py`, `prompts.py`, `settings.py`).
+- `app/main.py` is the FastAPI entrypoint; `app/rag/` holds core modules (`api.py` routes, `vector_store.py` for Pinecone, `chunking.py`, `embeddings.py`, `retrieval.py`, `llm.py`, `prompts.py`, `settings.py`).
 - `data/` contains sample `.txt` files for `/ingest_dir`.
-- `docker/` has the service `Dockerfile`; `docker-compose.yml` starts Postgres (and the API when built).
-- `infra/terraform/aws/` provisions the AWS stack (ECR/ECS/RDS/ALB); `scripts/` includes helpers like `ecr_build_push.sh`.
+- `docker/` has the service `Dockerfile`; `infra/` and `scripts/` remain for containerization and infra scaffolding (adapt as needed).
 - Python version is pinned to 3.13.1 (`.python-version`), dependencies in `requirements.txt`.
 
 ## Build, Test, and Development Commands
-- Start Postgres locally: `docker compose up -d postgres`
 - Create venv + install: `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
 - Run API locally (hot reload): `uvicorn app.main:app --reload --port 8011`
-- Local Docker (linux/arm64 optimized): `docker compose up --build`
-- AWS infra: `cd infra/terraform/aws && terraform init && terraform apply`; push image: `./scripts/ecr_build_push.sh <ecr_repo> <tag>`
-- Set env: `DATABASE_URL` required; `OPENAI_API_KEY` optional (mock mode without it); see `.env.example`/`scripts/local_env.sh` for defaults.
+- Pinecone env: set `PINECONE_API_KEY`, `PINECONE_INDEX`, `PINECONE_NAMESPACE`, `PINECONE_CLOUD`, `PINECONE_REGION`; set `OPENAI_API_KEY` to leave mock mode.
+- Local Docker (optional): `docker build -t rag-demo .` (compose for Postgres is not used anymore).
 
 ## Coding Style & Naming Conventions
 - Python 3.13, PEP 8, 4-space indent; favor type hints (as in `settings.py`), snake_case for modules/functions, UPPER_SNAKE for constants/env keys.
-- Keep FastAPI routers lean; push logic into `app/rag/*` helpers. Use SQLAlchemy sessions via `SessionLocal()` context to avoid leaks.
+- Keep FastAPI routers lean; push logic into `app/rag/*` helpers. Keep Pinecone access isolated in `vector_store.py`.
 - Imports ordered stdlib → third-party → local. Keep docstrings/comments minimal and focused on non-obvious behavior.
 
 ## Testing Guidelines
@@ -32,4 +29,4 @@
 
 ## Security & Configuration Tips
 - Do not commit secrets; use `.env` locally and environment variables in deploys. Mock mode prevents accidental OpenAI spend.
-- Postgres schema/extension are created on startup; ensure the DB user can run `CREATE EXTENSION vector` in non-mock environments.
+- Pinecone requires an API key; set cloud/region/index/namespace explicitly for each environment. Avoid sending sensitive content to third-party services unless policies allow.

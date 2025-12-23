@@ -1,10 +1,8 @@
 fastapi==0.115.6
 uvicorn[standard]==0.32.1
 pydantic==2.10.4
-sqlalchemy==2.0.36
-psycopg[binary]==3.2.13
-pgvector==0.3.6
 openai==1.58.1
 python-dotenv==1.0.1
 pydantic-settings==2.7.0
 pytest==8.3.4
+pinecone-client==3.2.2

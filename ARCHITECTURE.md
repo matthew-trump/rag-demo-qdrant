@@ -3,12 +3,12 @@
 ## Components (minimal RAG)
 
 1. **FastAPI service** (single container)
-   - Ingest: chunk → embed → store (Postgres/pgvector)
-   - Ask: embed question → retrieve top-k → generate answer → return citations
+   - Ingest: chunk → embed → store (Pinecone)
+   - Ask: embed question → retrieve top-k from Pinecone → generate answer → return citations
 
-2. **Postgres + pgvector**
-   - Stores documents, chunks, and chunk embeddings.
-   - Retrieval is a single SQL query using pgvector distance ordering.
+2. **Pinecone**
+   - Stores chunks + embeddings as vectors with metadata (`content`, `source`, `chunk_index`, optional metadata).
+   - Retrieval is a vector similarity query (cosine).
 
 ## Data flow
 
@@ -16,13 +16,12 @@
 1. `POST /ingest` (text + optional metadata)
 2. Chunking (fixed-size + overlap)
 3. Embeddings
-4. Insert `documents` row
-5. Insert N `chunks` rows with `embedding`
+4. Upsert N vectors to Pinecone with metadata
 
 ### Ask
 1. `POST /ask` (question)
 2. Embed question
-3. Retrieve top-k similar chunks
+3. Retrieve top-k similar chunks from Pinecone
 4. Build prompt with:
    - instructions
    - retrieved context (with citations)
@@ -32,23 +31,17 @@
 
 ## Storage
 
-Tables:
-- `documents(id, source, metadata, created_at)`
-- `chunks(id, document_id, chunk_index, content, embedding, created_at)`
-
-Index:
-- pgvector IVFFLAT index on `chunks.embedding` (created when possible).
+Pinecone index:
+- Vectors sized to embedding dimension (1536) with cosine metric.
+- Metadata: `content`, `source`, `chunk_index`, plus user-supplied metadata.
+- Namespace: configurable (default `default`).
 
 ## Deployments
 
 ### Local dev
-- Postgres via `docker compose`
-- API via `uvicorn` (or via docker compose)
+- API via `uvicorn`
+- Pinecone (managed) — requires API key and index; auto-created if missing.
 
-### AWS
-- ECR repo for container image
-- ECS cluster + Fargate service
-- ALB public endpoint
-- RDS Postgres in private subnets
-- Secrets Manager for DB password
-- SSM / env vars for non-secret config
+### Cloud
+- Containerize the FastAPI service (e.g., ECS/Fargate or your platform of choice).
+- Pinecone remains managed; configure API key, index name, namespace, cloud/region via env vars.

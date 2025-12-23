@@ -5,13 +5,12 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app.rag.settings import settings
-from app.rag.db import SessionLocal
-from app.rag.schema import Document, Chunk
 from app.rag.chunking import chunk_text
 from app.rag.embeddings import embed_texts
 from app.rag.retrieval import retrieve_top_k
 from app.rag.prompts import build_context_block
 from app.rag.llm import generate_answer
+from app.rag.vector_store import upsert_chunks, PineconeNotConfiguredError
 
 router = APIRouter()
 
@@ -32,24 +31,21 @@ def ingest(req: IngestRequest) -> dict:
 
     embeddings = embed_texts([c.text for c in chunks])
 
-    with SessionLocal() as session:
-        doc = Document(source=req.source, meta=req.metadata)
-        session.add(doc)
-        session.flush()  # assign doc.id
+    try:
+        added = upsert_chunks(chunks, embeddings, req.source, req.metadata)
+    except PineconeNotConfiguredError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-        for c, emb in zip(chunks, embeddings, strict=True):
-            session.add(Chunk(document_id=doc.id, chunk_index=c.index, content=c.text, embedding=emb))
-
-        session.commit()
-
-    return {"ok": True, "document_source": req.source, "chunks_ingested": len(chunks), "mode": settings.mode}
+    return {"ok": True, "document_source": req.source, "chunks_ingested": added, "mode": settings.mode}
 
 @router.post("/ask")
 def ask(req: AskRequest) -> dict:
     q_emb = embed_texts([req.question])[0]
 
-    with SessionLocal() as session:
-        hits = retrieve_top_k(session, q_emb, req.top_k)
+    try:
+        hits = retrieve_top_k(q_emb, req.top_k)
+    except PineconeNotConfiguredError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     context = build_context_block(hits)
     answer = generate_answer(req.question, context)
@@ -75,21 +71,14 @@ def ingest_dir() -> dict:
         raise HTTPException(status_code=400, detail="No .txt files found in data/.")
 
     total_chunks = 0
-    with SessionLocal() as session:
-        for filename, body in texts:
-            chunks = chunk_text(body, settings.chunk_size, settings.chunk_overlap)
-            if not chunks:
-                continue
-            embeddings = embed_texts([c.text for c in chunks])
-
-            doc = Document(source=f"file:{filename}", meta={"filename": filename})
-            session.add(doc)
-            session.flush()
-
-            for c, emb in zip(chunks, embeddings, strict=True):
-                session.add(Chunk(document_id=doc.id, chunk_index=c.index, content=c.text, embedding=emb))
-            total_chunks += len(chunks)
-
-        session.commit()
+    for filename, body in texts:
+        chunks = chunk_text(body, settings.chunk_size, settings.chunk_overlap)
+        if not chunks:
+            continue
+        embeddings = embed_texts([c.text for c in chunks])
+        try:
+            total_chunks += upsert_chunks(chunks, embeddings, f"file:{filename}", {"filename": filename})
+        except PineconeNotConfiguredError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     return {"ok": True, "files": [t[0] for t in texts], "chunks_ingested": total_chunks, "mode": settings.mode}
